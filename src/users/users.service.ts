@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { User } from './entities/user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -9,6 +10,27 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {}
+
+  async findAll(role?: string, search?: string): Promise<User[]> {
+    const where: any = {};
+    
+    if (role && role !== 'all') {
+      where.role = role;
+    }
+
+    if (search) {
+      return this.usersRepository
+        .createQueryBuilder('user')
+        .where(role && role !== 'all' ? 'user.role = :role' : '1=1', { role })
+        .andWhere(
+          '(user.email LIKE :search OR user.firstName LIKE :search OR user.lastName LIKE :search OR user.companyName LIKE :search)',
+          { search: `%${search}%` },
+        )
+        .getMany();
+    }
+
+    return this.usersRepository.find({ where });
+  }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { email } });
@@ -58,5 +80,31 @@ export class UsersService {
       user.password = password;
       await this.usersRepository.save(user);
     }
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.usersRepository.delete(id);
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const user = await this.findById(userId);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const isValidPassword = await user.validatePassword(currentPassword);
+    
+    if (!isValidPassword) {
+      throw new Error('Current password is incorrect');
+    }
+
+    await this.updatePassword(userId, newPassword);
+    
+    return { message: 'Password changed successfully' };
   }
 }

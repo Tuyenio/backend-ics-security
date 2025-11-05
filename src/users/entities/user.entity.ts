@@ -38,6 +38,12 @@ export class User {
   @Column({ nullable: true })
   position: string;
 
+  @Column({ nullable: true })
+  mobile: string;
+
+  @Column({ nullable: true })
+  avatar: string;
+
   @Column({ type: 'int', nullable: true, default: 0 })
   androidTimes: number;
 

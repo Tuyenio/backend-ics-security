@@ -2,11 +2,15 @@ import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, Qu
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { EmailService } from '../email/email.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @Get()
   async findAll(
@@ -30,6 +34,19 @@ export class UsersController {
   async create(@Body() createUserDto: CreateUserDto) {
     const user = await this.usersService.create(createUserDto);
     const { password, ...result } = user;
+    
+    // Send welcome email with credentials
+    try {
+      await this.emailService.sendWelcomeEmail(
+        user.email,
+        user.firstName,
+        createUserDto.password,
+      );
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+      // Don't fail the user creation if email fails
+    }
+    
     return result;
   }
 
@@ -67,11 +84,26 @@ export class UsersController {
     @Request() req,
     @Body() body: { currentPassword: string; newPassword: string },
   ) {
-    return this.usersService.changePassword(
+    const result = await this.usersService.changePassword(
       req.user.userId,
       body.currentPassword,
       body.newPassword,
     );
+    
+    // Send notification email
+    try {
+      const user = await this.usersService.findById(req.user.userId);
+      if (user) {
+        await this.emailService.sendPasswordChangedNotification(
+          user.email,
+          user.firstName,
+        );
+      }
+    } catch (error) {
+      console.error('Failed to send password changed notification:', error);
+    }
+    
+    return result;
   }
 
   @Post('upload-avatar')

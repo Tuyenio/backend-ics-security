@@ -55,18 +55,46 @@ export class UsersController {
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    const user = await this.usersService.update(id, updateUserDto);
-    if (!user) {
-      return { message: 'User not found' };
+    try {
+      // Remove email from update data (email should not be changed)
+      const { email, ...updateData } = updateUserDto;
+      
+      const user = await this.usersService.update(id, updateData);
+      if (!user) {
+        return { statusCode: 404, message: 'User not found' };
+      }
+      const { password, ...result } = user;
+      return result;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      return { 
+        statusCode: 400, 
+        message: error.message || 'Failed to update user' 
+      };
     }
-    const { password, ...result } = user;
-    return result;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    await this.usersService.remove(id);
-    return { message: 'User deleted successfully' };
+    try {
+      const user = await this.usersService.findById(id);
+      if (!user) {
+        return { statusCode: 404, message: 'User not found' };
+      }
+      
+      await this.usersService.remove(id);
+      return { 
+        statusCode: 200,
+        message: 'User deleted successfully',
+        id: id 
+      };
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return { 
+        statusCode: 400, 
+        message: error.message || 'Failed to delete user' 
+      };
+    }
   }
 
   @Get('profile/me')

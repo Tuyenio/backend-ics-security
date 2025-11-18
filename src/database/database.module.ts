@@ -17,12 +17,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         synchronize: true, // Tự động đồng bộ schema, đặt false trong production
         logging: true,
-        ssl: {
-          rejectUnauthorized: false, // Cần cho Supabase
-        },
-        extra: {
-          connectionTimeoutMillis: 10000,
-        },
       }),
     }),
   ],

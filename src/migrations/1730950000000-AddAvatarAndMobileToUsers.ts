@@ -2,23 +2,32 @@ import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
 export class AddAvatarAndMobileToUsers1730950000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.addColumn(
-      'users',
-      new TableColumn({
-        name: 'mobile',
-        type: 'varchar',
-        isNullable: true,
-      }),
-    );
+    // Kiểm tra xem cột đã tồn tại chưa trước khi thêm
+    const table = await queryRunner.getTable('users');
+    const hasMobile = table?.findColumnByName('mobile');
+    const hasAvatar = table?.findColumnByName('avatar');
 
-    await queryRunner.addColumn(
-      'users',
-      new TableColumn({
-        name: 'avatar',
-        type: 'varchar',
-        isNullable: true,
-      }),
-    );
+    if (!hasMobile) {
+      await queryRunner.addColumn(
+        'users',
+        new TableColumn({
+          name: 'mobile',
+          type: 'varchar',
+          isNullable: true,
+        }),
+      );
+    }
+
+    if (!hasAvatar) {
+      await queryRunner.addColumn(
+        'users',
+        new TableColumn({
+          name: 'avatar',
+          type: 'varchar',
+          isNullable: true,
+        }),
+      );
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

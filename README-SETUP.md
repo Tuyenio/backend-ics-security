@@ -2,16 +2,16 @@
 
 ## Tổng Quan
 
-Backend API cho hệ thống ICS Security được xây dựng bằng NestJS, TypeORM và PostgreSQL (Supabase).
+Backend API cho hệ thống ICS Security được xây dựng bằng NestJS, TypeORM và PostgreSQL (Local pgAdmin 4).
 
 ## Cấu Hình
 
 ### Database
-- **Host:** db.myjjfkwbpbdgmkocobkk.supabase.co
+- **Host:** localhost
 - **Port:** 5432
-- **Database:** postgres
-- **User:** postgres
-- **Project ID:** myjjfkwbpbdgmkocobkk
+- **Database:** hyperg_db
+- **User:** hyperg_user
+- **Password:** 123456
 
 ### Tính Năng Bảo Mật
 
@@ -20,7 +20,6 @@ Backend API cho hệ thống ICS Security được xây dựng bằng NestJS, Ty
 ✅ Password reset với secure token (hết hạn sau 1 giờ)
 ✅ Validation đầy đủ cho tất cả input
 ✅ CORS được cấu hình an toàn
-✅ SSL connection với database
 
 ## Cài Đặt
 
@@ -28,8 +27,8 @@ Backend API cho hệ thống ICS Security được xây dựng bằng NestJS, Ty
 # Cài đặt dependencies
 pnpm install
 
-# Chạy migrations và seed dữ liệu
-pnpm run seed
+# Chạy migrations để tạo bảng và seed dữ liệu
+npm run migration:run
 
 # Khởi động development server
 pnpm run start:dev
@@ -162,16 +161,11 @@ File `.env` cần có các biến sau:
 PORT=3001
 NODE_ENV=development
 
-# Supabase
-SUPABASE_URL=https://myjjfkwbpbdgmkocobkk.supabase.co
-SUPABASE_ANON_KEY=...
-
-# Database
-DATABASE_URL=postgresql://postgres:123456@db.myjjfkwbpbdgmkocobkk.supabase.co:5432/postgres
-DB_HOST=db.myjjfkwbpbdgmkocobkk.supabase.co
+# Database (PostgreSQL Local)
+DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=postgres
-DB_USER=postgres
+DB_NAME=hyperg_db
+DB_USER=hyperg_user
 DB_PASS=123456
 
 # SMTP
@@ -210,14 +204,15 @@ curl -X GET http://localhost:3001/api/protected-route \
 3. ✅ JWT token hết hạn sau 7 ngày
 4. ✅ CORS được cấu hình cho frontend
 5. ✅ Validation được áp dụng cho tất cả input
-6. ✅ Database connection sử dụng SSL
+6. ✅ Migrations tự động tạo bảng và seed dữ liệu
 
 ## Troubleshooting
 
 ### Không kết nối được database
 - Kiểm tra file `.env` có đúng thông tin không
-- Đảm bảo IP của bạn được whitelist trong Supabase
-- Kiểm tra firewall/network settings
+- Đảm bảo PostgreSQL đang chạy trên pgAdmin 4
+- Kiểm tra database `hyperg_db` và user `hyperg_user` đã được tạo
+- Chạy lại migrations nếu bảng chưa được tạo: `npm run migration:run`
 
 ### Migration lỗi
 ```bash

@@ -1,8 +1,28 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { DataSource } from 'typeorm';
+import dataSource from './data-source';
 
 async function bootstrap() {
+  // Chạy migrations tự động khi start backend
+  try {
+    if (!dataSource.isInitialized) {
+      await dataSource.initialize();
+    }
+    const pendingMigrations = await dataSource.showMigrations();
+    if (pendingMigrations) {
+      console.log('🔄 Đang chạy migrations...');
+      await dataSource.runMigrations();
+      console.log('✅ Migrations đã hoàn tất!');
+    } else {
+      console.log('✅ Database đã được cập nhật!');
+    }
+    await dataSource.destroy();
+  } catch (error) {
+    console.log('ℹ️  Migrations: ', error.message);
+  }
+
   const app = await NestFactory.create(AppModule);
 
   // Cấu hình CORS

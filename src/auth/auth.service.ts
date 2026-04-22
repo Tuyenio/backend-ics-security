@@ -2,7 +2,6 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -52,8 +51,8 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
 
     // Trả về thông tin user (không bao gồm password)
-    const { password: _, ...userWithoutPassword } = user;
-
+    // Đổi tên biến khi destructuring để tránh trùng lặp
+    const { password: _userPassword, ...userWithoutPassword } = user;
     return {
       token,
       user: userWithoutPassword,
@@ -83,8 +82,11 @@ export class AuthService {
       resetTokenExpires,
     );
 
-    // Tạo reset link
-    const frontendUrl = this.configService.get('FRONTEND_URL');
+    // Ưu tiên lấy FRONTEND_URL từ biến môi trường hệ thống (process.env), sau đó đến configService
+    const frontendUrl =
+      process.env.FRONTEND_URL ||
+      this.configService.get('FRONTEND_URL') ||
+      'http://localhost:3000';
     const resetLink = `${frontendUrl}/auth/reset-password?token=${resetToken}`;
 
     // Gửi email
@@ -122,10 +124,7 @@ export class AuthService {
     }
 
     // Kiểm tra token còn hạn không
-    if (
-      !user.resetPasswordExpires ||
-      user.resetPasswordExpires < new Date()
-    ) {
+    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
       throw new BadRequestException('Token đã hết hạn');
     }
 
